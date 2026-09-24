@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Booking System</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .booking {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .delete {
+            background: red;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Booking System</h1>
+
+    <h2>Create a booking</h2>
+
+    <form id="bookingForm">
+
+        <input type="text" id="name" placeholder="First name" required>
+
+        <input type="text" id="surname" placeholder="Last name" required>
+
+        <input type="text" id="phone" placeholder="Phone number">
+
+        <input type="email" id="email" placeholder="Email">
+
+        <input type="date" id="travelDate" required>
+
+        <input type="time" id="travelTime" required>
+
+        <button type="submit">
+            Create booking
+        </button>
+
+    </form>
+
+
+    <h2>All bookings</h2>
+
+    <div id="bookings">
+        Loading...
+    </div>
+
+
+    <script>
+
+        async function loadBookings() {
+
+            const response = await fetch("/Booking");
+
+            if (!response.ok) {
+                return;
+            }
+
+            const bookings = await response.json();
+
+            const container = document.getElementById("bookings");
+
+            container.innerHTML = "";
+
+
+            if (bookings.length === 0) {
+
+                container.innerHTML = "No bookings.";
+
+                return;
+            }
+
+
+            bookings.forEach(booking => {
+
+                const div = document.createElement("div");
+
+                div.className = "booking";
+
+                div.innerHTML = `
+                    <strong>
+                        ${booking.NAME} ${booking.SURNAME}
+                    </strong>
+
+                    <p>
+                        Booking number:
+                        ${booking.BookingNumber}
+                    </p>
+
+                    <p>
+                        Date: ${booking.TRAVELDATE}
+                    </p>
+
+                    <p>
+                        Time: ${booking.TRAVELTIME}
+                    </p>
+
+                    <p>
+                        Phone: ${booking.PHONENUMBER || "-"}
+                    </p>
+
+                    <p>
+                        Email: ${booking.EMAIL || "-"}
+                    </p>
+
+                    <button
+                        class="delete"
+                        onclick="deleteBooking(${booking.ID})">
+                        Cancel booking
+                    </button>
+                `;
+
+                container.appendChild(div);
+
+            });
+
+        }
+
+
+        document
+            .getElementById("bookingForm")
+            .addEventListener("submit", async function(event) {
+
+                event.preventDefault();
+
+
+                const booking = {
+
+                    NAME: document.getElementById("name").value,
+
+                    SURNAME: document.getElementById("surname").value,
+
+                    PHONENUMBER:
+                        document.getElementById("phone").value,
+
+                    EMAIL:
+                        document.getElementById("email").value,
+
+                    TRAVELDATE:
+                        document.getElementById("travelDate").value,
+
+                    TRAVELTIME:
+                        document.getElementById("travelTime").value
+                };
+
+
+                const response = await fetch("/Booking", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(booking)
+                });
+
+
+                if (response.ok) {
+
+                    document
+                        .getElementById("bookingForm")
+                        .reset();
+
+                    loadBookings();
+
+                } else {
+
+                    alert("Something went wrong.");
+
+                }
+
+            });
+
+
+        async function deleteBooking(id) {
+
+            const response = await fetch(`/Booking/${id}`, {
+                method: "DELETE"
+            });
+
+
+            if (response.ok) {
+                loadBookings();
+            }
+
+        }
+
+
+        loadBookings();
+
+    </script>
+
+</body>
+</html>

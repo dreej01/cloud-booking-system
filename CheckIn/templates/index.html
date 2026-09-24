@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Check-in</title>
+
+    <style>
+
+        body {
+            font-family: Arial;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        input {
+            width: 70%;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .passenger {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .checked {
+            color: green;
+        }
+
+        .not-checked {
+            color: red;
+        }
+
+        .cancel {
+            background: red;
+            color: white;
+            border: none;
+            padding: 8px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <h1>Check-in</h1>
+
+
+    <h2>Check in</h2>
+
+    <input
+        type="number"
+        id="bookingNumber"
+        placeholder="Booking number"
+    >
+
+    <button onclick="checkIn()">
+        Check in
+    </button>
+
+    <p id="message"></p>
+
+
+    <h2>All passengers</h2>
+
+    <div id="passengers">
+        Loading...
+    </div>
+
+
+    <script>
+
+        async function loadPassengers() {
+
+            const response = await fetch("/CheckIn");
+
+            if (!response.ok) {
+                return;
+            }
+
+            const passengers = await response.json();
+
+            const container =
+                document.getElementById("passengers");
+
+            container.innerHTML = "";
+
+
+            if (passengers.length === 0) {
+
+                container.innerHTML =
+                    "There are no bookings.";
+
+                return;
+            }
+
+
+            passengers.forEach(passenger => {
+
+                const div =
+                    document.createElement("div");
+
+                div.className = "passenger";
+
+
+                let status;
+
+                if (passenger.CHECKEDIN) {
+                    status = "Checked in";
+                } else {
+                    status = "Not checked in";
+                }
+
+
+                div.innerHTML = `
+
+                    <h3>
+                        ${passenger.NAME}
+                        ${passenger.SURNAME}
+                    </h3>
+
+                    <p>
+                        Booking number:
+                        ${passenger.BookingNumber}
+                    </p>
+
+                    <p>
+                        Date:
+                        ${passenger.TRAVELDATE}
+                    </p>
+
+                    <p>
+                        Time:
+                        ${passenger.TRAVELTIME}
+                    </p>
+
+                    <p class="${
+                        passenger.CHECKEDIN
+                            ? "checked"
+                            : "not-checked"
+                    }">
+                        ${status}
+                    </p>
+
+                    ${
+                        passenger.CHECKEDIN
+                            ? `
+                                <button
+                                    class="cancel"
+                                    onclick="cancelCheckIn(
+                                        ${passenger.BookingNumber}
+                                    )">
+                                    Undo check-in
+                                </button>
+                              `
+                            : ""
+                    }
+
+                `;
+
+                container.appendChild(div);
+
+            });
+
+        }
+
+
+        async function checkIn() {
+
+            const bookingNumber =
+                document
+                .getElementById("bookingNumber")
+                .value;
+
+            const message =
+                document.getElementById("message");
+
+
+            if (bookingNumber === "") {
+
+                message.innerText =
+                    "Please enter a booking number.";
+
+                return;
+            }
+
+
+            const response =
+                await fetch(
+                    `/CheckIn/${bookingNumber}`,
+                    {
+                        method: "PUT"
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (response.ok) {
+
+                message.innerText =
+                    "Check-in successful.";
+
+                document
+                    .getElementById("bookingNumber")
+                    .value = "";
+
+                loadPassengers();
+
+            } else {
+
+                message.innerText =
+                    data.message;
+
+            }
+
+        }
+
+
+        async function cancelCheckIn(bookingNumber) {
+
+            const response =
+                await fetch(
+                    `/CheckIn/${bookingNumber}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            if (response.ok) {
+
+                loadPassengers();
+
+            }
+
+        }
+
+
+        loadPassengers();
+
+    </script>
+
+</body>
+
+</html>
