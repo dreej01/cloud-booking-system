@@ -1,0 +1,30 @@
+services:
+
+  bookingdb:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: BookingDb
+      MYSQL_USER: BookingUser
+      MYSQL_PASSWORD: BookingPassword
+      MYSQL_ROOT_PASSWORD: RootPassword
+    volumes:
+      - bookingdata:/var/lib/mysql
+
+  bookingapp:
+    build:
+      context: ../Booking
+    ports:
+      - "5001:5001"
+    depends_on:
+      - bookingdb
+
+  checkinapp:
+    build:
+      context: .
+    ports:
+      - "5002:5002"
+    depends_on:
+      - bookingdb
+
+volumes:
+  bookingdata:
